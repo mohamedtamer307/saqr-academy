@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوحة الإدارة | SAQR Academy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+</head>
+
+<body class="bg-[#050505] text-white min-h-screen" style="font-family:Arial,Tahoma,sans-serif">
+  <!-- الهيدر الرئيسي -->
+  <header class="sticky top-0 z-40 bg-black/90 backdrop-blur border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex justify-between items-center">
+      <div>
+        <p class="text-red-500 text-xs font-black tracking-widest">SAQR ACADEMY</p>
+        <h1 class="text-2xl font-black">لوحة الإدارة العامة</h1>
+      </div>
+      <div class="flex gap-2">
+        <a href="course-manager.html" class="bg-red-600 px-4 py-2 rounded-xl">🎥 إدارة الكورسات</a>
+        <a href="dashboard.html" class="bg-white/10 px-4 py-2 rounded-xl">لوحة المتدرب</a>
+        <button onclick="logout()" class="border border-white/10 px-4 py-2 rounded-xl">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- محتوى الصفحة -->
+  <main class="max-w-7xl mx-auto px-5 py-8">
+    <div id="guard" class="text-gray-400">جاري التحقق...</div>
+
+    <section id="app" class="hidden space-y-6">
+      <!-- الإحصائيات -->
+      <div id="stats" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"></div>
+
+      <!-- الحسابات والمستخدمون -->
+      <section class="bg-[#101010] border border-white/10 rounded-2xl p-5">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="text-xl font-black">الحسابات والمستخدمون</h2>
+            <p class="text-gray-500 text-sm">الحالة، الباقة، الاشتراك والصلاحيات.</p>
+          </div>
+          <button onclick="loadAll()" class="bg-white/10 px-4 py-2 rounded-xl">تحديث</button>
+        </div>
+        <input id="accountSearch" oninput="filterTable('accountTable',this.value)" placeholder="بحث بالاسم أو البريد أو الهاتف" class="w-full bg-black border border-white/10 rounded-xl p-3 mb-4">
+        <div id="accountTable" class="overflow-auto"></div>
+      </section>
+
+      <!-- المدفوعات والحوالات -->
+      <section class="bg-[#101010] border border-white/10 rounded-2xl p-5">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="text-xl font-black">المدفوعات والحوالات</h2>
+            <p class="text-gray-500 text-sm">راجع الحوالة ثم فعّل الاشتراك.</p>
+          </div>
+          <button onclick="loadPayments()" class="bg-white/10 px-4 py-2 rounded-xl">تحديث</button>
+        </div>
+        <div id="paymentTable" class="overflow-auto"></div>
+      </section>
+
+      <!-- حسابات الإدارة والصلاحيات -->
+      <section class="bg-[#101010] border border-white/10 rounded-2xl p-5">
+        <div class="mb-4">
+          <h2 class="text-xl font-black">حسابات الإدارة والصلاحيات</h2>
+          <p class="text-gray-500 text-sm">كلمات المرور تظل في Supabase Auth. هنا نحدد ما يستطيع كل حساب الوصول إليه.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-3 mb-5">
+          <input id="staffUserId" placeholder="User ID من Authentication" class="bg-black border border-white/10 rounded-xl p-3">
+          <select id="staffRole" class="bg-black border border-white/10 rounded-xl p-3">
+            <option value="course_manager">Course Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button onclick="saveStaff()" class="bg-red-600 rounded-xl p-3 font-bold">إضافة / تحديث الصلاحيات</button>
+        </div>
+        <div id="staffTable" class="overflow-auto"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const db = supabaseClient;
+    let profiles = [];
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[m]));
+
+    async function guardCheck() {
+      const { data: { user } } = await db.auth.getUser();
+      if (!user) {
+        location.href = 'login.html';
+        return false;
+      }
+
+      const { data: s } = await db.from('staff_access').select('*').eq('user_id', user.id).eq('is_active', true).maybeSingle();
+      if (!s || s.access_role !== 'admin') {
+        guard.innerHTML = '<div class="p-5 rounded-2xl border border-red-600/30 bg-red-950/20 text-red-400">ليس لديك صلاحية الإدارة العامة. أضف حسابك إلى staff_access كـ admin من Supabase SQL Editor.</div>';
+        return false;
+      }
+
+      guard.classList.add('hidden');
+      app.classList.remove('hidden');
+      return true;
+    }
+
+    async function init() {
+      if (!await guardCheck()) return;
+      await loadAll();
+    }
+
+    async function loadAll() {
+      await Promise.all([loadStats(), loadAccounts(), loadPayments(), loadStaff()]);
+    }
+
+    async function loadStats() {
+      const [u, c, p, s, pend] = await Promise.all([
+        db.from('profiles').select('*', { count: 'exact', head: true }),
+        db.from('courses').select('*', { count: 'exact', head: true }),
+        db.from('plans').select('*', { count: 'exact', head: true }),
+        db.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        db.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending_confirmation')
+      ]);
+
+      stats.innerHTML = [
+        ['المستخدمون', u.count || 0],
+        ['الكورسات', c.count || 0],
+        ['الباقات', p.count || 0],
+        ['اشتراكات نشطة', s.count || 0],
+        ['مدفوعات معلقة', pend.count || 0]
+      ].map(x => `<div class="bg-[#101010] border border-white/10 rounded-2xl p-5"><div class="text-gray-500">${x[0]}</div><div class="text-3xl font-black mt-2">${x[1]}</div></div>`).join('');
+    }
+
+    async function loadAccounts() {
+      const r = await db.from('profiles').select('*').order('created_at', { ascending: false }).limit(300);
+      profiles = r.data || [];
+      const ids = profiles.map(p => p.id);
+
+      let subs = [];
+      if (ids.length) {
+        const x = await db.from('subscriptions').select('user_id,status,starts_at,ends_at,created_at,plans(name,price,currency)').in('user_id', ids).order('created_at', { ascending: false });
+        subs = x.data || [];
+      }
+
+      const latest = {};
+      subs.forEach(s => {
+        if (!latest[s.user_id]) latest[s.user_id] = s;
+      });
+
+      const st = s => ({
+        active: 'نشط',
+        pending: 'قيد المراجعة',
+        expired: 'منتهي',
+        cancelled: 'ملغي'
+      }[s] || '-');
+
+      accountTable.innerHTML = `
+        <table class="w-full min-w-[1100px] text-sm">
+          <thead>
+            <tr class="text-gray-500 border-b border-white/10">
+              <th class="p-3 text-right">العميل</th>
+              <th class="p-3 text-right">التسجيل</th>
+              <th class="p-3 text-right">الباقة</th>
+              <th class="p-3 text-right">الاشتراك</th>
+              <th class="p-3 text-right">الحساب</th>
+              <th class="p-3 text-right">إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${profiles.map(p => {
+              const s = latest[p.id], pl = s?.plans;
+              return `<tr class="border-b border-white/5">
+                <td class="p-3">
+                  <b>${esc(p.full_name || 'بدون اسم')}</b>
+                  <div class="text-gray-500 text-xs">${esc(p.email || '-')} · ${esc(p.phone || '-')}</div>
+                </td>
+                <td class="p-3">${new Date(p.created_at).toLocaleString('ar-EG')}</td>
+                <td class="p-3">${esc(pl?.name || 'لم يختر')}</td>
+                <td class="p-3">${esc(st(s?.status))}${s?.ends_at ? `<div class="text-gray-500 text-xs">ينتهي ${new Date(s.ends_at).toLocaleDateString('ar-SA')}</div>` : ''}</td>
+                <td class="p-3">${p.account_status === 'suspended' ? '<span class="text-red-400">متوقف</span>' : '<span class="text-green-400">مفعّل</span>'}</td>
+                <td class="p-3">${p.account_status === 'suspended' ? `<button onclick="setStatus('${p.id}','active')" class="bg-green-600 px-3 py-2 rounded-lg">تفعيل</button>` : `<button onclick="setStatus('${p.id}','suspended')" class="bg-red-700 px-3 py-2 rounded-lg">إيقاف</button>`}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function filterTable(id, q) {
+      q = q.toLowerCase();
+      document.querySelectorAll('#' + id + ' tbody tr').forEach(r => r.style.display = !q || r.textContent.toLowerCase().includes(q) ? '' : 'none');
+    }
+
+    async function setStatus(id, status) {
+      if (!confirm(status === 'suspended' ? 'إيقاف الحساب؟' : 'إعادة تفعيل الحساب؟')) return;
+
+      const { error } = await db.from('profiles').update({ account_status: status }).eq('id', id);
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      if (status === 'suspended') {
+        await db.from('subscriptions').update({ status: 'cancelled' }).eq('user_id', id).eq('status', 'active');
+      }
+
+      await loadAll();
+    }
+
+    async function loadPayments() {
+      const r = await db.from('payments').select('id,user_id,plan_id,amount,currency,status,payment_method,customer_reference,sender_phone,proof_path,created_at,plans(name)').order('created_at', { ascending: false }).limit(200);
+      const ps = r.data || [];
+      const ids = [...new Set(ps.map(x => x.user_id))];
+      const pr = ids.length ? (await db.from('profiles').select('*').in('id', ids)).data || [] : [];
+      const pm = Object.fromEntries(pr.map(p => [p.id, p]));
+      const methods = { instapay: 'InstaPay', vodafone_cash: 'Vodafone Cash', bank_transfer: 'تحويل بنكي' };
+
+      paymentTable.innerHTML = `
+        <table class="w-full min-w-[1350px] text-sm">
+          <thead>
+            <tr class="text-gray-500 border-b border-white/10">
+              <th class="p-3 text-right">العميل</th>
+              <th class="p-3 text-right">الباقة</th>
+              <th class="p-3 text-right">المبلغ</th>
+              <th class="p-3 text-right">الطريقة</th>
+              <th class="p-3 text-right">رقم المحول</th>
+              <th class="p-3 text-right">المرجع</th>
+              <th class="p-3 text-right">الإثبات</th>
+              <th class="p-3 text-right">الحالة</th>
+              <th class="p-3 text-right">الإجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ps.map(x => `<tr class="border-b border-white/5">
+              <td class="p-3">
+                <b>${esc(pm[x.user_id]?.full_name || 'مشترك')}</b>
+                <div class="text-gray-500 text-xs">${esc(pm[x.user_id]?.email || '')}</div>
+              </td>
+              <td class="p-3">${esc(x.plans?.name || '-')}</td>
+              <td class="p-3 font-bold">${Number(x.amount).toLocaleString('ar-EG')} ${esc(x.currency || 'EGP')}</td>
+              <td class="p-3">${esc(methods[x.payment_method] || x.payment_method || '-')}</td>
+              <td class="p-3">${esc(x.sender_phone || '-')}</td>
+              <td class="p-3">${esc(x.customer_reference || '-')}</td>
+              <td class="p-3">${x.proof_path ? `<button onclick="viewProof('${x.proof_path}')" class="bg-white/10 px-3 py-2 rounded-lg">عرض</button>` : '-'}</td>
+              <td class="p-3">${esc({ pending_confirmation: 'قيد المراجعة', paid: 'مدفوع', failed: 'فشل', refunded: 'مسترد' }[x.status] || x.status)}</td>
+              <td class="p-3">${x.status === 'pending_confirmation' ? `<button onclick="confirmPayment('${x.id}')" class="bg-green-600 px-3 py-2 rounded-lg font-bold">تأكيد وتفعيل</button>` : '-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function viewProof(path) {
+      const r = await db.storage.from('payment-proofs').createSignedUrl(path, 300);
+      if (r.error) {
+        alert(r.error.message);
+        return;
+      }
+      window.open(r.data.signedUrl, '_blank');
+    }
+
+    async function confirmPayment(id) {
+      if (!confirm('هل تأكدت أن المبلغ وصل؟')) return;
+
+      const r = await db.rpc('confirm_payment', { p_payment_id: id });
+      if (r.error) {
+        alert('تعذر التفعيل: ' + r.error.message);
+        return;
+      }
+
+      if (!r.data?.success) {
+        alert(r.data?.message || 'تعذر التفعيل');
+        return;
+      }
+
+      alert('تم الدفع وتفعيل الاشتراك والحساب بنجاح.');
+      await loadAll();
+    }
+
+    async function loadStaff() {
+      const r = await db.from('staff_access').select('*').order('created_at', { ascending: false });
+      const rows = r.data || [];
+
+      staffTable.innerHTML = `
+        <table class="w-full min-w-[1000px] text-sm">
+          <thead>
+            <tr class="text-gray-500 border-b border-white/10">
+              <th class="p-3 text-right">User ID</th>
+              <th class="p-3 text-right">الدور</th>
+              <th class="p-3 text-right">الصلاحيات</th>
+              <th class="p-3 text-right">الحالة</th>
+              <th class="p-3 text-right">إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(s => `<tr class="border-b border-white/5">
+              <td class="p-3 font-mono text-xs">${esc(s.user_id)}</td>
+              <td class="p-3">${esc(s.access_role)}</td>
+              <td class="p-3">${[
+                s.can_manage_users ? 'عملاء' : '',
+                s.can_manage_payments ? 'مدفوعات' : '',
+                s.can_manage_courses ? 'كورسات' : '',
+                s.can_manage_plans ? 'باقات' : '',
+                s.can_view_reports ? 'تقارير' : '',
+                s.can_manage_settings ? 'إعدادات' : ''
+              ].filter(Boolean).join(' · ') || 'لا توجد'}</td>
+              <td class="p-3">${s.is_active ? '<span class="text-green-400">فعال</span>' : '<span class="text-red-400">متوقف</span>'}</td>
+              <td class="p-3"><button onclick="toggleStaff('${s.user_id}',${!s.is_active})" class="bg-white/10 px-3 py-2 rounded-lg">${s.is_active ? 'إيقاف الصلاحية' : 'تفعيل الصلاحية'}</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function saveStaff() {
+      const id = document.getElementById('staffUserId').value.trim();
+      const role = document.getElementById('staffRole').value;
+
+      if (!id) return alert('ضع User ID من Authentication');
+
+      const full = role === 'admin';
+      const obj = {
+        user_id: id,
+        access_role: role,
+        is_active: true,
+        can_manage_users: full,
+        can_manage_payments: full,
+        can_manage_courses: true,
+        can_manage_plans: full,
+        can_view_reports: full,
+        can_manage_settings: full
+      };
+
+      const { error } = await db.from('staff_access').upsert(obj);
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert('تم حفظ صلاحيات الحساب.');
+      document.getElementById('staffUserId').value = '';
+      await loadStaff();
+    }
+
+    async function toggleStaff(id, active) {
+      const { error } = await db.from('staff_access').update({ is_active: active }).eq('user_id', id);
+      if (error) alert(error.message);
+      else loadStaff();
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      location.href = 'login.html';
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

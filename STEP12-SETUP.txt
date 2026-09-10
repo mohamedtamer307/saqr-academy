@@ -1,0 +1,48 @@
+SAQR Academy — STEP 12
+=======================
+
+ما الجديد؟
+- فصل لوحة الإدارة العامة عن لوحة إدارة الكورسات.
+- course-manager.html لإدارة الكورسات والدروس والفيديوهات وربط الكورسات بالباقات.
+- staff_access للتحكم في الحسابات الإدارية والصلاحيات.
+- تسجيل الدخول يوجّه الحساب تلقائيًا حسب الصلاحية:
+  admin -> admin.html
+  course_manager -> course-manager.html
+  customer -> dashboard.html
+- إصلاح تفعيل الدفع بشكل ذري: الدفع + الاشتراك + حالة الحساب تتغير معًا.
+- إصلاح مشكلة صلاحية الإدارة القديمة التي كانت تعتمد فقط على app_metadata.role.
+
+مهم جدًا بخصوص كلمة المرور:
+لا ننشئ جدولًا نخزن فيه كلمات المرور. كلمات المرور يجب أن تبقى داخل Supabase Authentication.
+الجدول staff_access يخزن فقط الصلاحيات.
+
+طريقة إنشاء حساب Admin:
+1) Supabase Dashboard > Authentication > Users > Add user.
+2) أنشئ البريد وكلمة المرور من هناك.
+3) انسخ User ID للحساب.
+4) شغل step12-role-permissions.sql أولًا.
+5) في admin.html بعد دخول Admin يمكنك إدخال User ID واختيار Admin.
+   أو استخدم استعلام البريد الموجود في آخر ملف SQL.
+
+طريقة إنشاء Course Manager:
+1) أنشئ الحساب من Authentication بنفس الطريقة.
+2) افتح admin.html بحساب Admin.
+3) قسم "حسابات الإدارة والصلاحيات".
+4) أدخل User ID واختر Course Manager.
+5) سيصبح الحساب قادرًا على دخول course-manager.html فقط.
+
+ترتيب التشغيل:
+- هذه الخطوة مخصصة لمشروعك الحالي بعد خطوات Supabase السابقة.
+- شغّل step12-role-permissions.sql مرة واحدة.
+- لا تعيد تشغيل ملفات SQL القديمة الخاصة بـ payments إذا كان جدول payments موجودًا.
+
+إذا كانت قاعدة البيانات جديدة تمامًا:
+شغّل الملفات السابقة من Step 1 إلى Step 10/11 حسب ملفات المشروع، ثم Step 12.
+
+ملاحظة:
+زر تأكيد الدفع يستخدم public.confirm_payment()، ويتطلب أن يكون الحساب Admin أو لديه can_manage_payments=true.
+
+الحماية:
+- فيديوهات academy-videos خاصة Private.
+- إثباتات الدفع payment-proofs خاصة Private.
+- لا تضع service_role key في ملفات HTML/JS.

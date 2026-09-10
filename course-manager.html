@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إدارة الكورسات | SAQR Academy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    body {
+      font-family: Arial, Tahoma, sans-serif
+    }
+
+    .card {
+      background: #101010;
+      border: 1px solid rgba(255, 255, 255, .08)
+    }
+  </style>
+</head>
+
+<body class="bg-[#050505] text-white min-h-screen">
+
+  <header class="sticky top-0 z-40 bg-black/90 backdrop-blur border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
+      <div>
+        <p class="text-[#e10600] text-xs font-black tracking-widest">SAQR ACADEMY</p>
+        <h1 class="text-2xl font-black">مدير الكورسات والفيديوهات</h1>
+      </div>
+      <div class="flex gap-2">
+        <a href="admin.html" class="px-4 py-2 rounded-xl bg-white/10">لوحة الإدارة</a>
+        <button onclick="logout()" class="px-4 py-2 rounded-xl border border-white/10">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-5 py-8">
+    <div id="guard" class="text-gray-400">جاري التحقق...</div>
+    <section id="app" class="hidden">
+      <div class="grid lg:grid-cols-3 gap-6">
+        <aside class="card rounded-2xl p-5">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h2 class="text-xl font-black">الكورسات</h2>
+              <p class="text-xs text-gray-500">إضافة وتعديل ونشر</p>
+            </div>
+            <button onclick="newCourse()" class="bg-[#e10600] px-4 py-2 rounded-xl font-bold">+ كورس</button>
+          </div>
+          <input id="search" oninput="renderCourseList()" placeholder="بحث..." class="w-full bg-black border border-white/10 rounded-xl p-3 mb-4">
+          <div id="courseList" class="space-y-2"></div>
+        </aside>
+
+        <section class="lg:col-span-2 card rounded-2xl p-5">
+          <div id="editor" class="text-gray-500">اختر كورسًا من القائمة أو أنشئ كورسًا جديدًا.</div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const db = supabaseClient;
+    let courses = [],
+      plans = [],
+      current = null;
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    } [m]));
+
+    const slug = s => s.toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06ff]+/g, '-').replace(/^-+|-+$/g, '') || 'course-' + Date.now();
+
+    async function guardCheck() {
+      const {
+        data: {
+          user
+        }
+      } = await db.auth.getUser();
+
+      if (!user) {
+        location.href = 'login.html';
+        return false;
+      }
+
+      const {
+        data: s
+      } = await db.from('staff_access').select('*').eq('user_id', user.id).eq('is_active', true).maybeSingle();
+
+      if (!s || (s.access_role !== 'admin' && !s.can_manage_courses)) {
+        document.getElementById('guard').innerHTML = '<div class="p-5 rounded-2xl border border-red-600/30 text-red-400 bg-red-950/20">ليس لديك صلاحية إدارة الكورسات.</div>';
+        return false;
+      }
+
+      if (s.access_role === 'admin' || s.can_manage_courses) {
+        document.getElementById('guard').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        return true;
+      }
+
+      return false;
+    }
+
+    async function init() {
+      if (!await guardCheck()) return;
+      await load();
+    }
+
+    async function load() {
+      const [c, p] = await Promise.all([
+        db.from('courses').select('*').order('created_at', {
+          ascending: false
+        }),
+        db.from('plans').select('*').order('price')
+      ]);
+
+      courses = c.data || [];
+      plans = p.data || [];
+      renderCourseList();
+    }
+
+    function renderCourseList() {
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      document.getElementById('courseList').innerHTML = courses
+        .filter(c => c.title.toLowerCase().includes(q))
+        .map(c => `<button onclick="openCourse('${c.id}')" class="w-full text-right p-4 rounded-xl border border-white/10 bg-black/30 hover:border-[#e10600]/60"><div class="flex justify-between gap-2"><b>${esc(c.title)}</b><span class="text-xs ${c.is_active?'text-green-400':'text-red-400'}">${c.is_active?'منشور':'مخفي'}</span></div><div class="text-gray-500 text-xs mt-1">${esc(c.level||'')} ${c.is_featured?'· ⭐ مميز':''}</div></button>`)
+        .join('') || '<p class="text-gray-600 text-sm">لا توجد نتائج.</p>';
+    }
+
+    async function newCourse() {
+      const title = prompt('اسم الكورس');
+      if (!title) return;
+
+      const {
+        data,
+        error
+      } = await db.from('courses').insert({
+        title,
+        slug: slug(title),
+        description: '',
+        level: 'Beginner',
+        is_active: true,
+        is_featured: false
+      }).select().single();
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      await load();
+      openCourse(data.id);
+    }
+
+    async function openCourse(id) {
+      const {
+        data: c,
+        error
+      } = await db.from('courses').select('*').eq('id', id).single();
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      current = c;
+      const [l, pc] = await Promise.all([
+        db.from('lessons').select('*').eq('course_id', id).order('sort_order'),
+        db.from('plan_courses').select('plan_id').eq('course_id', id)
+      ]);
+
+      const linked = (pc.data || []).map(x => x.plan_id);
+
+      document.getElementById('editor').innerHTML = `
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-2xl font-black">${esc(c.title)}</h2>
+            <p class="text-gray-500 text-sm mt-1">بيانات الكورس وتوزيعه على الباقات.</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-3">
+            <label>اسم الكورس<input id="title" value="${esc(c.title)}" class="mt-2 w-full bg-black border border-white/10 rounded-xl p-3"></label>
+            <label>المستوى<input id="level" value="${esc(c.level||'')}" class="mt-2 w-full bg-black border border-white/10 rounded-xl p-3"></label>
+            <label>التصنيف<input id="category" value="${esc(c.category||'')}" placeholder="Boxing / Fitness" class="mt-2 w-full bg-black border border-white/10 rounded-xl p-3"></label>
+            <label>صورة الكورس<input id="thumb" value="${esc(c.thumbnail_url||'')}" placeholder="رابط الصورة" class="mt-2 w-full bg-black border border-white/10 rounded-xl p-3"></label>
+          </div>
+          <textarea id="desc" class="w-full bg-black border border-white/10 rounded-xl p-3 min-h-28" placeholder="وصف الكورس">${esc(c.description||'')}</textarea>
+          <div>
+            <b>الباقات التي تحصل على الكورس</b>
+            <div class="flex flex-wrap gap-2 mt-3">
+              ${plans.map(p=>`<label class="px-3 py-2 rounded-xl border border-white/10 bg-black"><input class="planBox ml-2" type="checkbox" value="${p.id}" ${linked.includes(p.id)?'checked':''}>${esc(p.name)} · ${Number(p.price).toLocaleString('ar-EG')} ${esc(p.currency||'EGP')}</label>`).join('')}
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="saveCourse()" class="bg-[#e10600] px-5 py-3 rounded-xl font-bold">حفظ</button>
+            <button onclick="togglePublish()" class="bg-white/10 px-5 py-3 rounded-xl">${c.is_active?'إخفاء الكورس':'نشر الكورس'}</button>
+            <button onclick="toggleFeatured()" class="bg-white/10 px-5 py-3 rounded-xl">${c.is_featured?'إزالة المميزة':'⭐ كورس مميز'}</button>
+            <button onclick="deleteCourse()" class="border border-red-600/30 text-red-400 px-5 py-3 rounded-xl">حذف</button>
+          </div>
+          <hr class="border-white/10">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-xl font-black">الدروس والفيديوهات</h3>
+              <p class="text-gray-500 text-sm">${(l.data||[]).length} درس</p>
+            </div>
+            <button onclick="addLesson()" class="bg-white/10 px-4 py-2 rounded-xl">+ إضافة درس</button>
+          </div>
+          <div id="lessons" class="space-y-3">
+            ${(l.data||[]).map(renderLesson).join('')}
+          </div>
+        </div>`;
+    }
+
+    function renderLesson(l) {
+      return `
+        <article class="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div class="grid md:grid-cols-3 gap-3">
+            <input id="lt-${l.id}" value="${esc(l.title)}" class="bg-black border border-white/10 rounded-xl p-3" placeholder="عنوان الدرس">
+            <input id="lo-${l.id}" type="number" value="${l.sort_order||0}" class="bg-black border border-white/10 rounded-xl p-3" placeholder="الترتيب">
+            <input id="lm-${l.id}" type="number" min="0" value="${l.duration_minutes||0}" class="bg-black border border-white/10 rounded-xl p-3" placeholder="الدقائق">
+          </div>
+          <textarea id="ld-${l.id}" class="mt-3 w-full bg-black border border-white/10 rounded-xl p-3" placeholder="وصف الدرس">${esc(l.description||'')}</textarea>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <label class="cursor-pointer bg-white/10 px-4 py-2 rounded-xl">رفع فيديو<input type="file" accept="video/*" class="hidden" onchange="uploadVideo('${l.id}',this.files[0])"></label>
+            <label class="px-3 py-2 rounded-xl border border-white/10"><input id="lp-${l.id}" type="checkbox" class="ml-2" ${l.is_preview?'checked':''}>معاينة مجانية</label>
+            <span id="vp-${l.id}" class="text-gray-500 text-xs">${l.video_path?'🎬 فيديو مرفوع':'لا يوجد فيديو'}</span>
+            <button onclick="saveLesson('${l.id}')" class="bg-[#e10600] px-4 py-2 rounded-xl text-sm">حفظ الدرس</button>
+            <button onclick="deleteLesson('${l.id}','${esc(l.video_path||'')}')" class="text-red-400 px-3 py-2">حذف</button>
+          </div>
+        </article>`;
+    }
+
+    async function saveCourse() {
+      const title = document.getElementById('title').value.trim();
+      if (!title) return alert('اكتب اسم الكورس');
+
+      const {
+        error
+      } = await db.from('courses').update({
+        title,
+        slug: slug(title),
+        description: document.getElementById('desc').value,
+        level: document.getElementById('level').value,
+        category: document.getElementById('category').value,
+        thumbnail_url: document.getElementById('thumb').value
+      }).eq('id', current.id);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      await db.from('plan_courses').delete().eq('course_id', current.id);
+      const ids = [...document.querySelectorAll('.planBox:checked')].map(x => x.value);
+
+      if (ids.length) {
+        const {
+          error: e
+        } = await db.from('plan_courses').insert(ids.map(plan_id => ({
+          plan_id,
+          course_id: current.id
+        })));
+        if (e) {
+          alert(e.message);
+          return;
+        }
+      }
+
+      alert('تم حفظ الكورس وتوزيعه على الباقات.');
+      await load();
+      openCourse(current.id);
+    }
+
+    async function togglePublish() {
+      await db.from('courses').update({
+        is_active: !current.is_active
+      }).eq('id', current.id);
+      await load();
+      openCourse(current.id);
+    }
+
+    async function toggleFeatured() {
+      await db.from('courses').update({
+        is_featured: !current.is_featured
+      }).eq('id', current.id);
+      await load();
+      openCourse(current.id);
+    }
+
+    async function deleteCourse() {
+      if (!confirm('حذف الكورس وكل دروسه؟')) return;
+
+      const {
+        error
+      } = await db.from('courses').delete().eq('id', current.id);
+
+      if (error) {
+        alert(error.message);
+      } else {
+        current = null;
+        document.getElementById('editor').innerHTML = '<p class="text-gray-500">تم حذف الكورس.</p>';
+        await load();
+      }
+    }
+
+    async function addLesson() {
+      const title = prompt('عنوان الدرس');
+      if (!title) return;
+
+      const {
+        data: lastLesson
+      } = await db.from('lessons').select('sort_order').eq('course_id', current.id).order('sort_order', {
+        ascending: false
+      }).limit(1).maybeSingle();
+
+      const nextOrder = Number(lastLesson?.sort_order || 0) + 1;
+
+      const {
+        data,
+        error
+      } = await db.from('lessons').insert({
+        course_id: current.id,
+        title,
+        description: '',
+        sort_order: nextOrder,
+        duration_minutes: 0,
+        is_active: true,
+        is_preview: false
+      }).select().single();
+
+      if (error) alert(error.message);
+      else openCourse(current.id);
+    }
+
+    async function saveLesson(id) {
+      const {
+        error
+      } = await db.from('lessons').update({
+        title: document.getElementById('lt-' + id).value,
+        description: document.getElementById('ld-' + id).value,
+        sort_order: Number(document.getElementById('lo-' + id).value) || 0,
+        duration_minutes: Number(document.getElementById('lm-' + id).value) || 0,
+        is_preview: document.getElementById('lp-' + id).checked
+      }).eq('id', id);
+
+      if (error) alert(error.message);
+      else alert('تم حفظ الدرس');
+    }
+
+    async function uploadVideo(id, file) {
+      if (!file) return;
+
+      const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+      const path = `${current.id}/${id}.${ext}`;
+
+      const {
+        error
+      } = await db.storage.from('academy-videos').upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'video/mp4'
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      const {
+        error: e
+      } = await db.from('lessons').update({
+        video_path: path,
+        video_url: null
+      }).eq('id', id);
+
+      if (e) {
+        alert(e.message);
+        return;
+      }
+
+      document.getElementById('vp-' + id).textContent = '🎬 تم رفع الفيديو';
+    }
+
+    async function deleteLesson(id, path) {
+      if (!confirm('حذف الدرس والفيديو؟')) return;
+
+      await db.from('lessons').delete().eq('id', id);
+      if (path) await db.storage.from('academy-videos').remove([path]);
+      openCourse(current.id);
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      location.href = 'login.html';
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

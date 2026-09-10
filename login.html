@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>تسجيل الدخول | SAQR Academy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>body{background:#050505;color:#fff;font-family:Arial,Tahoma,sans-serif}.glass{background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09)}</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-5">
+<div class="fixed inset-0 opacity-20" style="background:radial-gradient(circle at 20% 30%,#e10600,transparent 30%),radial-gradient(circle at 80% 70%,#8b0000,transparent 25%)"></div>
+<div class="relative w-full max-w-md">
+<a href="index.html" class="flex justify-center mb-7"><img src="assets/saqr-logo.jpg" class="w-24 h-24 rounded-2xl object-cover border border-white/10" alt="SAQR"></a>
+<div class="glass rounded-3xl p-8 shadow-2xl">
+<div class="text-center"><p class="text-[#e10600] text-xs font-black tracking-widest">SAQR ACADEMY</p><h1 class="text-3xl font-black mt-2">مرحباً بعودتك</h1><p class="text-gray-500 text-sm mt-2">سجّل الدخول للوصول إلى تدريباتك</p></div>
+<form id="loginForm" class="mt-8 space-y-5">
+<div><label class="text-sm font-bold text-gray-300">البريد الإلكتروني</label><input id="email" required type="email" placeholder="name@example.com" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#e10600]"></div>
+<div><label class="text-sm font-bold text-gray-300">كلمة المرور</label><input id="password" required type="password" placeholder="••••••••" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#e10600]"></div>
+<div class="flex justify-between items-center text-sm"><label class="text-gray-500"><input type="checkbox" class="ml-2"> تذكرني</label><a href="#" class="text-[#ff4b45]">نسيت كلمة المرور؟</a></div>
+<button id="submitBtn" class="w-full py-4 rounded-xl bg-[#e10600] hover:bg-[#b80500] font-black transition">تسجيل الدخول</button>
+<p id="msg" class="text-center text-sm"></p>
+</form>
+<div class="text-center text-sm text-gray-500 mt-7">ليس لديك حساب؟ <a href="register.html" class="text-white font-bold hover:text-[#ff4b45]">إنشاء حساب</a></div>
+</div></div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+ e.preventDefault();
+ const btn=document.getElementById('submitBtn'), msg=document.getElementById('msg');
+ btn.disabled=true; btn.textContent='جارٍ تسجيل الدخول...'; msg.textContent='';
+ const {error}=await supabaseClient.auth.signInWithPassword({
+   email:document.getElementById('email').value.trim(),
+   password:document.getElementById('password').value
+ });
+ if(error){msg.className='text-center text-sm text-red-400';msg.textContent=error.message;btn.disabled=false;btn.textContent='تسجيل الدخول';return;}
+ const {data:staff}=await supabaseClient.from('staff_access').select('access_role,can_manage_courses,is_active').eq('user_id', (await supabaseClient.auth.getUser()).data.user.id).eq('is_active',true).maybeSingle();
+ if(staff?.access_role==='admin') location.href='admin.html';
+ else if(staff?.access_role==='course_manager' || staff?.can_manage_courses) location.href='course-manager.html';
+ else location.href='dashboard.html';
+});
+</script>
+</body></html>

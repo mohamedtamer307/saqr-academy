@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الكورس | SAQR Academy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+</head>
+<body class="bg-[#050505] text-white min-h-screen">
+<header class="border-b border-white/10 bg-black/80 sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <a href="dashboard.html" class="text-red-500 font-bold">← لوحة التحكم</a>
+    <img src="assets/saqr-logo.jpg" class="w-12 h-12 rounded-full object-cover" alt="SAQR">
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+  <div id="status" class="text-gray-400">جاري تحميل الكورس...</div>
+
+  <section id="box" class="hidden">
+    <div class="bg-gradient-to-br from-red-950/40 to-black border border-red-600/20 rounded-3xl p-6 mb-6">
+      <p class="text-red-500 font-bold tracking-widest">SAQR ACADEMY</p>
+      <h1 id="ct" class="text-4xl font-black mt-2"></h1>
+      <p id="cd" class="text-gray-400 mt-3"></p>
+    </div>
+
+    <div class="bg-[#101010] border border-white/10 rounded-2xl p-5">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold">دروس الكورس</h2>
+        <span id="lessonCount" class="text-sm text-gray-500"></span>
+      </div>
+      <div id="lessonList" class="space-y-3"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const {createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const courseId=new URLSearchParams(location.search).get("id");
+
+function setStatus(text, error=false){
+  const el=document.getElementById("status");
+  el.textContent=text;
+  el.className=error ? "text-red-400" : "text-gray-400";
+}
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
+
+(async()=>{
+  const {data:{user},error:userError}=await db.auth.getUser();
+  if(userError || !user){location.href="login.html";return;}
+
+  if(!courseId){setStatus("الكورس غير محدد.",true);return;}
+
+  const {data:course,error:courseError}=await db
+    .from("courses").select("*").eq("id",courseId).single();
+
+  if(courseError || !course){
+    console.error(courseError);
+    setStatus("الكورس غير موجود أو حدث خطأ في تحميله.",true);
+    return;
+  }
+
+  // Step 12 uses ends_at, not expires_at.
+  const {data:sub,error:subError}=await db
+    .from("subscriptions")
+    .select("id,plan_id,status,starts_at,ends_at")
+    .eq("user_id",user.id)
+    .eq("status","active")
+    .gt("ends_at",new Date().toISOString())
+    .order("ends_at",{ascending:false})
+    .limit(1)
+    .maybeSingle();
+
+  if(subError){
+    console.error(subError);
+    setStatus("تعذر التحقق من الاشتراك.",true);
+    return;
+  }
+
+  const {data:links,error:linksError}=await db
+    .from("plan_courses").select("plan_id").eq("course_id",courseId);
+
+  if(linksError){
+    console.error(linksError);
+    setStatus("تعذر التحقق من صلاحية الكورس.",true);
+    return;
+  }
+
+  const allowed=!!sub && (links||[]).some(x=>x.plan_id===sub.plan_id);
+  if(!allowed){
+    document.getElementById("status").innerHTML =
+      '<div class="bg-red-950/30 border border-red-600/30 rounded-2xl p-5">' +
+      '<b class="text-red-400">هذا الكورس غير متاح ضمن اشتراكك الحالي.</b>' +
+      '<br><a href="plans.html" class="inline-block mt-4 bg-red-600 px-5 py-3 rounded-xl">اختيار / تغيير الباقة</a></div>';
+    return;
+  }
+
+  // Step 12 uses sort_order, not lesson_order.
+  const {data:ls,error:lessonError}=await db
+    .from("lessons")
+    .select("id,title,description,duration_minutes,sort_order,is_active,is_preview,video_path")
+    .eq("course_id",courseId)
+    .eq("is_active",true)
+    .order("sort_order",{ascending:true});
+
+  if(lessonError){
+    console.error(lessonError);
+    setStatus("حدث خطأ في تحميل الدروس: "+lessonError.message,true);
+    return;
+  }
+
+  document.getElementById("status").classList.add("hidden");
+  document.getElementById("box").classList.remove("hidden");
+  document.getElementById("ct").textContent=course.title||"كورس SAQR";
+  document.getElementById("cd").textContent=course.description||"";
+  document.getElementById("lessonCount").textContent=(ls||[]).length+" درس";
+
+  const list=document.getElementById("lessonList");
+
+  if(!ls?.length){
+    list.innerHTML='<div class="p-5 rounded-xl border border-white/10 text-gray-500">لم تتم إضافة دروس لهذا الكورس بعد.</div>';
+    return;
+  }
+
+  list.innerHTML=ls.map((l,i)=>{
+    const hasVideo=!!(l.video_path);
+    const duration=l.duration_minutes ? Number(l.duration_minutes)+" دقيقة" : "مدة غير محددة";
+    const preview=l.is_preview ? '<span class="text-xs text-green-400">معاينة مجانية</span>' : '';
+    const icon=hasVideo ? "▶" : "🔒";
+    return `
+      <a href="watch.html?lesson=${encodeURIComponent(l.id)}"
+         class="block p-4 rounded-xl border border-white/10 bg-black/20 hover:border-red-500/60 transition">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-full bg-red-600/15 text-red-500 flex items-center justify-center font-black">${i+1}</span>
+            <div>
+              <b class="block">${esc(l.title||"درس")}</b>
+              <div class="flex gap-3 mt-1 text-xs text-gray-500">${duration}${preview}</div>
+            </div>
+          </div>
+          <span class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center font-black">${icon}</span>
+        </div>
+      </a>`;
+  }).join("");
+})();
+</script>
+</body>
+</html>

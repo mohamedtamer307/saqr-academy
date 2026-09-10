@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مشاهدة الدرس | SAQR Academy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+</head>
+<body class="bg-[#050505] text-white min-h-screen">
+<header class="border-b border-white/10 bg-black/80 sticky top-0 z-40">
+  <div class="max-w-5xl mx-auto px-4 py-4">
+    <a id="back" class="text-red-500 font-bold">← رجوع</a>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-8">
+  <div id="msg" class="text-gray-400">جاري التحقق من صلاحية المشاهدة...</div>
+
+  <section id="content" class="hidden">
+    <h1 id="title" class="text-3xl font-black"></h1>
+    <p id="courseName" class="text-red-500 mt-2"></p>
+
+    <video id="player" class="w-full aspect-video bg-black mt-6 rounded-2xl border border-white/10"
+           controls playsinline preload="metadata"></video>
+
+    <div class="mt-5 bg-[#101010] p-5 rounded-2xl border border-white/10">
+      <div class="flex justify-between"><b>التقدم</b><b id="pct">0%</b></div>
+      <div class="h-3 bg-white/10 rounded-full mt-3">
+        <div id="bar" class="h-full bg-red-600 rounded-full" style="width:0%"></div>
+      </div>
+      <p id="saved" class="text-gray-500 text-sm mt-3">يتم الحفظ تلقائيًا.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const {createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const lessonId=new URLSearchParams(location.search).get("lesson");
+let user=null,last=-1,saveTimer=null;
+
+function fail(t){
+  const el=document.getElementById("msg");
+  el.textContent=t;
+  el.className="text-red-400";
+}
+
+function byId(id){return document.getElementById(id);}
+
+async function init(){
+  const {data:{user:u},error:userError}=await db.auth.getUser();
+  user=u;
+
+  if(userError || !user){location.href="login.html";return;}
+  if(!lessonId){fail("رابط الدرس غير صحيح.");return;}
+
+  const {data:l,error:lessonError}=await db
+    .from("lessons")
+    .select("id,title,course_id,video_path,video_url,courses(id,title)")
+    .eq("id",lessonId).single();
+
+  if(lessonError || !l){
+    console.error(lessonError);
+    fail("الدرس غير موجود.");
+    return;
+  }
+
+  const {data:links,error:linksError}=await db
+    .from("plan_courses").select("plan_id").eq("course_id",l.course_id);
+
+  if(linksError){console.error(linksError);fail("تعذر التحقق من صلاحية الكورس.");return;}
+
+  // Step 12 uses ends_at.
+  const {data:sub,error:subError}=await db
+    .from("subscriptions")
+    .select("plan_id")
+    .eq("user_id",user.id)
+    .eq("status","active")
+    .gt("ends_at",new Date().toISOString())
+    .order("ends_at",{ascending:false})
+    .limit(1).maybeSingle();
+
+  if(subError){console.error(subError);fail("تعذر التحقق من الاشتراك.");return;}
+
+  if(!sub || !(links||[]).some(x=>x.plan_id===sub.plan_id)){
+    fail("الدرس غير متاح ضمن اشتراكك الحالي.");
+    return;
+  }
+
+  byId("content").classList.remove("hidden");
+  byId("msg").classList.add("hidden");
+  byId("title").textContent=l.title||"درس";
+  byId("courseName").textContent=l.courses?.title||"SAQR";
+  byId("back").href="course.html?id="+encodeURIComponent(l.course_id);
+
+  const {data:p,error:progressError}=await db
+    .from("lesson_progress").select("*")
+    .eq("user_id",user.id).eq("lesson_id",lessonId).maybeSingle();
+
+  if(progressError) console.warn("Progress read:",progressError);
+
+  const player=byId("player");
+  const resume=Number(p?.watched_seconds||0);
+
+  if(l.video_path){
+    const {data:r,error}=await db.functions.invoke("get-video-url",{
+      body:{lesson_id:lessonId}
+    });
+
+    if(error || !r?.url){
+      console.error("get-video-url:",error,r);
+      byId("content").classList.add("hidden");
+      fail("تعذر فتح الفيديو. تأكد من نشر Edge Function باسم get-video-url.");
+      return;
+    }
+
+    player.src=r.url;
+  }else if(l.video_url){
+    player.src=l.video_url;
+  }else{
+    byId("content").classList.add("hidden");
+    fail("لم يتم ربط فيديو بهذا الدرس.");
+    return;
+  }
+
+  player.onloadedmetadata=()=>{
+    if(resume>0 && resume<player.duration-5) player.currentTime=resume;
+    update();
+  };
+  player.ontimeupdate=update;
+  player.onpause=()=>save(true);
+  player.onended=()=>save(true,100);
+  saveTimer=setInterval(()=>save(false),10000);
+}
+
+function currentProgress(){
+  const player=byId("player");
+  return player.duration && isFinite(player.duration)
+    ? Math.min(100,(player.currentTime/player.duration)*100) : 0;
+}
+
+function update(){
+  const x=Math.round(currentProgress());
+  byId("pct").textContent=x+"%";
+  byId("bar").style.width=x+"%";
+}
+
+async function save(force=false,forced=null){
+  const player=byId("player");
+  if(!user || !player.duration || !isFinite(player.duration)) return;
+
+  const x=forced??currentProgress();
+  const r=Math.round(x*10)/10;
+  if(!force && Math.abs(r-last)<1) return;
+  last=r;
+
+  const {error}=await db.from("lesson_progress").upsert({
+    user_id:user.id,
+    lesson_id:lessonId,
+    watched_seconds:Math.round(player.currentTime*10)/10,
+    progress_percent:r,
+    completed:r>=90,
+    updated_at:new Date().toISOString()
+  },{onConflict:"user_id,lesson_id"});
+
+  byId("saved").textContent=error ? "تعذر الحفظ مؤقتًا." : "تم حفظ التقدم ✓";
+}
+
+window.addEventListener("beforeunload",()=>{if(saveTimer)clearInterval(saveTimer);});
+init();
+</script>
+</body>
+</html>

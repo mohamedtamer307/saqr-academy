@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SAQR Academy - أكاديمية الملاكمة والتدريب الأونلاين">
+  <title>SAQR Academy | أكاديمية صقر للملاكمة</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'Tahoma', 'sans-serif']
+          },
+          colors: {
+            saqr: {
+              red: '#E10600',
+              darkred: '#8B0000',
+              black: '#050505',
+              panel: '#111111'
+            }
+          },
+          boxShadow: {
+            red: '0 0 35px rgba(225,6,0,.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background:#050505; color:#fff; }
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    .red-glow { box-shadow: 0 0 60px rgba(225,6,0,.18); }
+    .text-stroke {
+      -webkit-text-stroke: 1px rgba(255,255,255,.18);
+    }
+    .glass {
+      background: rgba(17,17,17,.72);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .card-hover { transition: .3s ease; }
+    .card-hover:hover {
+      transform: translateY(-7px);
+      border-color: rgba(225,6,0,.6);
+      box-shadow: 0 15px 45px rgba(225,6,0,.12);
+    }
+    .fade-up {
+      animation: fadeUp .8s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(25px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="font-sans">
+
+  <!-- NAVBAR -->
+  <header class="fixed top-0 right-0 left-0 z-50 glass">
+    <nav class="max-w-7xl mx-auto px-5 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <img src="assets/saqr-logo.jpg" alt="SAQR Academy Logo"
+             class="w-14 h-14 object-cover rounded-full border border-white/20">
+        <div class="hidden sm:block leading-tight">
+          <div class="font-black tracking-wider text-lg">SAQR</div>
+          <div class="text-[10px] text-gray-400 tracking-[.25em]">ACADEMY</div>
+        </div>
+      </a>
+
+      <div class="hidden lg:flex items-center gap-8 text-sm font-bold text-gray-300">
+        <a href="#home" class="hover:text-white transition">الرئيسية</a>
+        <a href="#why" class="hover:text-white transition">لماذا SAQR</a>
+        <a href="#packages" class="hover:text-white transition">الباقات</a>
+        <a href="#courses" class="hover:text-white transition">الكورسات</a>
+        <a href="#about" class="hover:text-white transition">عن الأكاديمية</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="login.html" class="hidden sm:inline-flex px-5 py-2.5 rounded-lg border border-white/15 hover:bg-white/5 transition text-sm font-bold">
+          تسجيل الدخول
+        </a>
+        <a href="#packages" class="inline-flex px-5 py-2.5 rounded-lg bg-saqqr-red bg-[#E10600] hover:bg-[#b80500] transition text-sm font-black shadow-red">
+          اشترك الآن
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <main id="home">
+    <section class="relative min-h-screen overflow-hidden hero-grid flex items-center pt-24">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(225,6,0,.18),transparent_32%),linear-gradient(90deg,#050505_0%,rgba(5,5,5,.86)_50%,#050505_100%)]"></div>
+
+      <div class="absolute -left-32 top-1/4 w-96 h-96 bg-[#E10600]/10 rounded-full blur-3xl"></div>
+      <div class="absolute right-0 bottom-0 w-[500px] h-[500px] bg-[#8B0000]/10 rounded-full blur-3xl"></div>
+
+      <div class="relative max-w-7xl mx-auto px-5 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center">
+        <div class="fade-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#E10600]/30 bg-[#E10600]/10 text-[#ff4b45] text-xs font-black mb-6">
+            <span class="w-2 h-2 rounded-full bg-[#E10600] animate-pulse"></span>
+            ONLINE BOXING ACADEMY
+          </div>
+
+          <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black leading-[.95] tracking-tight">
+            TRAIN.
+            <span class="block text-[#E10600]">FIGHT.</span>
+            <span class="block text-stroke">DOMINATE.</span>
+          </h1>
+
+          <p class="mt-7 text-gray-300 text-lg leading-8 max-w-xl">
+            طوّر مهاراتك في الملاكمة مع تدريبات احترافية أونلاين،
+            كورسات منظمة وفيديوهات تدريبية تساعدك على الوصول لمستوى أقوى.
+          </p>
+
+          <div class="mt-9 flex flex-wrap gap-4">
+            <a href="#packages"
+               class="px-7 py-4 rounded-xl bg-[#E10600] hover:bg-[#b80500] transition font-black shadow-red">
+              ابدأ تدريبك الآن 🥊
+            </a>
+            <a href="#courses"
+               class="px-7 py-4 rounded-xl border border-white/15 hover:bg-white/5 transition font-bold">
+              استكشف الكورسات
+            </a>
+          </div>
+
+          <div class="mt-10 flex items-center gap-8 text-sm">
+            <div>
+              <div class="text-2xl font-black">24/7</div>
+              <div class="text-gray-500 mt-1">وصول للتدريب</div>
+            </div>
+            <div class="w-px h-10 bg-white/10"></div>
+            <div>
+              <div class="text-2xl font-black">100%</div>
+              <div class="text-gray-500 mt-1">أونلاين</div>
+            </div>
+            <div class="w-px h-10 bg-white/10"></div>
+            <div>
+              <div class="text-2xl font-black">SAQR</div>
+              <div class="text-gray-500 mt-1">روح المقاتل</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative hidden lg:flex justify-center items-center fade-up">
+          <div class="absolute w-[430px] h-[430px] rounded-full border border-[#E10600]/20"></div>
+          <div class="absolute w-[350px] h-[350px] rounded-full border border-white/10"></div>
+          <div class="absolute w-[270px] h-[270px] rounded-full bg-[#E10600]/5 blur-2xl"></div>
+
+          <div class="relative w-[390px] h-[390px] rounded-full overflow-hidden border border-white/10 red-glow">
+            <img src="assets/saqr-logo.jpg" alt="SAQR Academy"
+                 class="w-full h-full object-cover scale-[1.05]">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+          </div>
+
+          <div class="absolute bottom-8 -right-2 glass rounded-2xl px-5 py-4">
+            <div class="text-[#E10600] text-xs font-black">LEVEL UP</div>
+            <div class="font-black mt-1">Become SAQR.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-gray-600 text-xs tracking-[.3em]">
+        SCROLL TO TRAIN
+      </div>
+    </section>
+
+    <!-- WHY -->
+    <section id="why" class="py-24 bg-[#080808]">
+      <div class="max-w-7xl mx-auto px-5 lg:px-8">
+        <div class="max-w-2xl mb-14">
+          <p class="text-[#E10600] font-black text-sm">WHY SAQR?</p>
+          <h2 class="text-4xl sm:text-5xl font-black mt-3">أكثر من مجرد تدريب.</h2>
+          <p class="text-gray-400 mt-5 leading-8">
+            نظام تدريبي مصمم ليخليك تتعلم، تتطور، وتبني عقلية المقاتل.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="glass rounded-2xl p-7 card-hover">
+            <div class="text-4xl mb-6">🥊</div>
+            <h3 class="text-xl font-black">تدريب احترافي</h3>
+            <p class="text-gray-400 mt-3 leading-7 text-sm">تعلّم الأساسيات والتقنيات بطريقة منظمة وواضحة.</p>
+          </div>
+          <div class="glass rounded-2xl p-7 card-hover">
+            <div class="text-4xl mb-6">🎥</div>
+            <h3 class="text-xl font-black">أونلاين 24/7</h3>
+            <p class="text-gray-400 mt-3 leading-7 text-sm">شاهد تدريباتك في الوقت والمكان المناسب لك.</p>
+          </div>
+          <div class="glass rounded-2xl p-7 card-hover">
+            <div class="text-4xl mb-6">📈</div>
+            <h3 class="text-xl font-black">طوّر مستواك</h3>
+            <p class="text-gray-400 mt-3 leading-7 text-sm">انتقل تدريجيًا من المبتدئ إلى المستوى المتقدم.</p>
+          </div>
+          <div class="glass rounded-2xl p-7 card-hover">
+            <div class="text-4xl mb-6">🔒</div>
+            <h3 class="text-xl font-black">محتوى حصري</h3>
+            <p class="text-gray-400 mt-3 leading-7 text-sm">محتوى التدريب يظهر للمشتركين حسب الباقة.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PACKAGES -->
+    <section id="packages" class="py-24">
+      <div class="max-w-7xl mx-auto px-5 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-14">
+          <p class="text-[#E10600] font-black text-sm">MEMBERSHIP</p>
+          <h2 class="text-4xl sm:text-5xl font-black mt-3">اختر باقتك</h2>
+          <p class="text-gray-400 mt-5">الأسعار التالية تجريبية لحين تحديد أسعار الاشتراك الفعلية.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-6 items-stretch">
+          <div class="glass rounded-3xl p-8 card-hover">
+            <div class="text-sm text-gray-400 font-bold">BASIC</div>
+            <h3 class="text-3xl font-black mt-3">الباقة الأساسية</h3>
+            <div class="mt-7"><span class="text-5xl font-black">99</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <ul class="mt-8 space-y-4 text-gray-300 text-sm">
+              <li>✓ أساسيات الملاكمة</li>
+              <li>✓ تدريبات المبتدئين</li>
+              <li>✓ Footwork</li>
+              <li>✓ Punching Basics</li>
+            </ul>
+            <a href="login.html" class="mt-9 block text-center py-4 rounded-xl border border-white/15 hover:bg-white/5 font-black transition">اشترك الآن</a>
+          </div>
+
+          <div class="relative rounded-3xl p-8 bg-gradient-to-b from-[#E10600]/20 to-[#111] border border-[#E10600]/50 card-hover shadow-red">
+            <div class="absolute -top-4 right-7 px-4 py-1.5 rounded-full bg-[#E10600] text-xs font-black">الأكثر اختيارًا</div>
+            <div class="text-sm text-[#ff4b45] font-bold">PRO</div>
+            <h3 class="text-3xl font-black mt-3">الباقة المتقدمة</h3>
+            <div class="mt-7"><span class="text-5xl font-black">199</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <ul class="mt-8 space-y-4 text-gray-200 text-sm">
+              <li>✓ جميع محتوى Basic</li>
+              <li>✓ تدريبات متقدمة</li>
+              <li>✓ الدفاع والحركة</li>
+              <li>✓ السرعة والقوة</li>
+            </ul>
+            <a href="login.html" class="mt-9 block text-center py-4 rounded-xl bg-[#E10600] hover:bg-[#b80500] font-black transition">اشترك الآن</a>
+          </div>
+
+          <div class="glass rounded-3xl p-8 card-hover">
+            <div class="text-sm text-gray-400 font-bold">ELITE</div>
+            <h3 class="text-3xl font-black mt-3">الباقة الاحترافية</h3>
+            <div class="mt-7"><span class="text-5xl font-black">299</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <ul class="mt-8 space-y-4 text-gray-300 text-sm">
+              <li>✓ جميع الكورسات</li>
+              <li>✓ محتوى متقدم</li>
+              <li>✓ برامج تدريب احترافية</li>
+              <li>✓ محتوى حصري</li>
+            </ul>
+            <a href="login.html" class="mt-9 block text-center py-4 rounded-xl border border-white/15 hover:bg-white/5 font-black transition">اشترك الآن</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COURSES -->
+    <section id="courses" class="py-24 bg-[#080808]">
+      <div class="max-w-7xl mx-auto px-5 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-12">
+          <div>
+            <p class="text-[#E10600] font-black text-sm">COURSES</p>
+            <h2 class="text-4xl sm:text-5xl font-black mt-3">الكورسات التدريبية</h2>
+          </div>
+          <span class="text-gray-500 text-sm">المحتوى الكامل يظهر حسب اشتراك العميل</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <article class="glass rounded-2xl overflow-hidden card-hover">
+            <div class="h-40 bg-gradient-to-br from-[#E10600]/30 via-[#181818] to-black flex items-center justify-center text-6xl">🥊</div>
+            <div class="p-6">
+              <span class="text-xs text-[#ff4b45] font-bold">BEGINNER</span>
+              <h3 class="font-black text-xl mt-2">Boxing Fundamentals</h3>
+              <p class="text-gray-500 text-sm mt-3">أساسيات الملاكمة من البداية.</p>
+            </div>
+          </article>
+
+          <article class="glass rounded-2xl overflow-hidden card-hover">
+            <div class="h-40 bg-gradient-to-br from-[#8B0000]/30 via-[#181818] to-black flex items-center justify-center text-6xl">👊</div>
+            <div class="p-6">
+              <span class="text-xs text-[#ff4b45] font-bold">TECHNIQUE</span>
+              <h3 class="font-black text-xl mt-2">Punching Techniques</h3>
+              <p class="text-gray-500 text-sm mt-3">Jab و Cross و Hook و Uppercut.</p>
+            </div>
+          </article>
+
+          <article class="glass rounded-2xl overflow-hidden card-hover">
+            <div class="h-40 bg-gradient-to-br from-[#E10600]/20 via-[#181818] to-black flex items-center justify-center text-6xl">🛡️</div>
+            <div class="p-6">
+              <span class="text-xs text-[#ff4b45] font-bold">DEFENSE</span>
+              <h3 class="font-black text-xl mt-2">Defense & Movement</h3>
+              <p class="text-gray-500 text-sm mt-3">الحركة والدفاع والمراوغة.</p>
+            </div>
+          </article>
+
+          <article class="glass rounded-2xl overflow-hidden card-hover">
+            <div class="h-40 bg-gradient-to-br from-[#8B0000]/30 via-[#181818] to-black flex items-center justify-center text-6xl">🔥</div>
+            <div class="p-6">
+              <span class="text-xs text-[#ff4b45] font-bold">ADVANCED</span>
+              <h3 class="font-black text-xl mt-2">Advanced Boxing</h3>
+              <p class="text-gray-500 text-sm mt-3">تقنيات وتدريبات متقدمة.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="py-24">
+      <div class="max-w-7xl mx-auto px-5 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <p class="text-[#E10600] font-black text-sm">ABOUT SAQR</p>
+          <h2 class="text-4xl sm:text-5xl font-black mt-3">ابنِ المقاتل بداخلك.</h2>
+          <p class="text-gray-400 leading-8 mt-6">
+            SAQR Academy هي أكاديمية ملاكمة أونلاين تهدف إلى تقديم تجربة تدريب
+            منظمة واحترافية، تجمع بين جودة المحتوى وسهولة الوصول للتدريب من أي مكان.
+          </p>
+          <a href="#packages" class="inline-block mt-8 px-7 py-4 rounded-xl bg-[#E10600] hover:bg-[#b80500] font-black transition">
+            ابدأ رحلتك
+          </a>
+        </div>
+
+        <div class="glass rounded-3xl p-5">
+          <img src="assets/saqr-logo.jpg" alt="SAQR Academy"
+               class="w-full max-w-md mx-auto rounded-2xl object-cover">
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 px-5">
+      <div class="max-w-6xl mx-auto rounded-3xl overflow-hidden relative border border-[#E10600]/30 bg-gradient-to-br from-[#300000] via-[#100000] to-[#080808] p-10 sm:p-16 text-center">
+        <div class="absolute inset-0 opacity-20 hero-grid"></div>
+        <div class="relative">
+          <p class="text-[#ff4b45] font-black text-sm">READY TO START?</p>
+          <h2 class="text-4xl sm:text-6xl font-black mt-3">جاهز تبدأ رحلتك؟</h2>
+          <p class="text-gray-300 mt-5">Train. Fight. Dominate. Become SAQR.</p>
+          <a href="#packages" class="inline-block mt-8 px-8 py-4 rounded-xl bg-[#E10600] hover:bg-[#b80500] font-black transition shadow-red">
+            اشترك الآن 🥊
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-white/10 bg-black">
+    <div class="max-w-7xl mx-auto px-5 lg:px-8 py-12">
+      <div class="flex flex-col md:flex-row justify-between gap-8">
+        <div class="flex items-center gap-4">
+          <img src="assets/saqr-logo.jpg" alt="SAQR Academy Logo" class="w-16 h-16 rounded-xl object-cover">
+          <div>
+            <div class="font-black text-xl">SAQR ACADEMY</div>
+            <div class="text-gray-500 text-sm mt-1">TRAIN. FIGHT. DOMINATE.</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-6 text-sm text-gray-400">
+          <a href="#home" class="hover:text-white">الرئيسية</a>
+          <a href="#courses" class="hover:text-white">الكورسات</a>
+          <a href="#packages" class="hover:text-white">الباقات</a>
+          <a href="#about" class="hover:text-white">عن الأكاديمية</a>
+        </div>
+      </div>
+      <div class="mt-10 pt-6 border-t border-white/10 text-center text-gray-600 text-xs">
+        © 2026 SAQR Academy — All Rights Reserved
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

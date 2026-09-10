@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>إنشاء حساب | SAQR Academy</title>
+<script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script>
+<style>body{background:#050505;color:#fff;font-family:Arial,Tahoma,sans-serif}.glass{background:rgba(17,17,17,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09)}</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-5">
+<div class="fixed inset-0 opacity-20" style="background:radial-gradient(circle at 20% 30%,#e10600,transparent 30%),radial-gradient(circle at 80% 70%,#8b0000,transparent 25%)"></div>
+<div class="relative w-full max-w-md"><a href="index.html" class="flex justify-center mb-6"><img src="assets/saqr-logo.jpg" class="w-20 h-20 rounded-2xl object-cover border border-white/10" alt="SAQR"></a>
+<div class="glass rounded-3xl p-8 shadow-2xl"><div class="text-center"><p class="text-red-500 text-xs font-black tracking-widest">SAQR ACADEMY</p><h1 class="text-3xl font-black mt-2">أنشئ حسابك</h1><p class="text-gray-500 text-sm mt-2">بعد التسجيل ستختار الباقة ثم تنتقل للدفع.</p></div>
+<form id="registerForm" class="mt-7 space-y-4">
+<div><label class="text-sm font-bold text-gray-300">الاسم الكامل</label><input id="name" required type="text" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-red-600"></div>
+<div><label class="text-sm font-bold text-gray-300">رقم الهاتف</label><input id="phone" required type="tel" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-red-600" placeholder="01xxxxxxxxx"></div>
+<div><label class="text-sm font-bold text-gray-300">البريد الإلكتروني</label><input id="email" required type="email" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-red-600"></div>
+<div><label class="text-sm font-bold text-gray-300">كلمة المرور</label><input id="password" required minlength="6" type="password" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-red-600"></div>
+<div><label class="text-sm font-bold text-gray-300">تأكيد كلمة المرور</label><input id="confirm" required minlength="6" type="password" class="mt-2 w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-red-600"></div>
+<label class="block text-sm text-gray-500"><input id="terms" required type="checkbox" class="ml-2"> أوافق على الشروط والأحكام</label>
+<button id="submitBtn" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 font-black">إنشاء الحساب والمتابعة</button><p id="msg" class="text-center text-sm"></p>
+</form><div class="text-center text-sm text-gray-500 mt-6">لديك حساب بالفعل؟ <a href="login.html" class="text-white font-bold">تسجيل الدخول</a></div></div></div>
+<script>
+document.getElementById('registerForm').addEventListener('submit',async e=>{e.preventDefault();const msg=document.getElementById('msg'),btn=document.getElementById('submitBtn');const nameInput=document.getElementById('name');const phoneInput=document.getElementById('phone');const emailInput=document.getElementById('email');const passwordInput=document.getElementById('password');const confirmInput=document.getElementById('confirm');if(passwordInput.value!==confirmInput.value){msg.className='text-center text-sm text-red-400';msg.textContent='كلمتا المرور غير متطابقتين';return;}btn.disabled=true;btn.textContent='جارٍ إنشاء الحساب...';
+ const {data,error}=await supabaseClient.auth.signUp({email:emailInput.value.trim(),password:passwordInput.value,options:{data:{full_name:nameInput.value.trim(),phone:phoneInput.value.trim()}}});
+ if(error){msg.className='text-center text-sm text-red-400';msg.textContent=error.message;btn.disabled=false;btn.textContent='إنشاء الحساب والمتابعة';return;}
+ if(data.session){location.href='plans.html';}else{msg.className='text-center text-sm text-yellow-400';msg.textContent='تم إنشاء الحساب، لكن يلزم تأكيد البريد الإلكتروني أولاً. بعد التأكيد سجّل الدخول وسيتم نقلك لاختيار الباقة.';btn.disabled=false;btn.textContent='إنشاء الحساب والمتابعة';}
+});
+</script></body></html>
