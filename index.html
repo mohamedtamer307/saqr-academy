@@ -44,14 +44,14 @@
       -webkit-text-stroke: 1px rgba(255,255,255,.18);
     }
     .glass {
-      background: rgba(17,17,17,.72);
+      background: rgba(33, 31, 31, 0.72);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,.08);
+      border: 1px solid rgba(203, 14, 14, 0.08);
     }
     .card-hover { transition: .3s ease; }
     .card-hover:hover {
       transform: translateY(-7px);
-      border-color: rgba(225,6,0,.6);
+      border-color: rgba(225, 7, 0, 0.678);
       box-shadow: 0 15px 45px rgba(225,6,0,.12);
     }
     .fade-up {
@@ -70,9 +70,9 @@
   <header class="fixed top-0 right-0 left-0 z-50 glass">
     <nav class="max-w-7xl mx-auto px-5 lg:px-8 h-20 flex items-center justify-between">
       <a href="#" class="flex items-center gap-3">
-        <img src="assets/saqr-logo.jpg" alt="SAQR Academy Logo"
-             class="w-14 h-14 object-cover rounded-full border border-white/20">
-        <div class="hidden sm:block leading-tight">
+        <img src="assets/saqr academy new2.png" alt="SAQR Academy Logo"
+             class="w-16 h-16 object-cover rounded-full border border-white/10">
+        <div class="block leading-tight">
           <div class="font-black tracking-wider text-lg">SAQR</div>
           <div class="text-[10px] text-gray-400 tracking-[.25em]">ACADEMY</div>
         </div>
@@ -86,11 +86,13 @@
         <a href="#about" class="hover:text-white transition">عن الأكاديمية</a>
       </div>
 
-      <div class="flex items-center gap-3">
-        <a href="login.html" class="hidden sm:inline-flex px-5 py-2.5 rounded-lg border border-white/15 hover:bg-white/5 transition text-sm font-bold">
+      <div class="flex items-center gap-2">
+        <a href="login.html"
+         class="inline-flex px-2 py-2.5 rounded-lg border border-white/15 hover:bg-white/5 transition text-sm font-bold">
           تسجيل الدخول
         </a>
-        <a href="#packages" class="inline-flex px-5 py-2.5 rounded-lg bg-saqqr-red bg-[#E10600] hover:bg-[#b80500] transition text-sm font-black shadow-red">
+        <a href="#packages" class="inline-flex px-2
+         py-2.5 rounded-lg bg-saqqr-red bg-[#E10600] hover:bg-[#b80500] transition text-sm font-black shadow-red">
           اشترك الآن
         </a>
       </div>
@@ -163,16 +165,16 @@
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
           </div>
 
-          <div class="absolute bottom-8 -right-2 glass rounded-2xl px-5 py-4">
+          <div class="absolute bottom-1 -right-2 glass rounded-2xl px-5 py-4">
             <div class="text-[#E10600] text-xs font-black">LEVEL UP</div>
             <div class="font-black mt-1">Become SAQR.</div>
           </div>
         </div>
       </div>
 
-      <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-gray-600 text-xs tracking-[.3em]">
+      <!-- <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-gray-600 text-xs tracking-[.3em]">
         SCROLL TO TRAIN
-      </div>
+      </div> -->
     </section>
 
     <!-- WHY -->
@@ -217,14 +219,15 @@
         <div class="text-center max-w-2xl mx-auto mb-14">
           <p class="text-[#E10600] font-black text-sm">MEMBERSHIP</p>
           <h2 class="text-4xl sm:text-5xl font-black mt-3">اختر باقتك</h2>
-          <p class="text-gray-400 mt-5">الأسعار التالية تجريبية لحين تحديد أسعار الاشتراك الفعلية.</p>
+          <!-- <p class="text-gray-400 mt-5">الأسعار التالية تجريبية لحين تحديد أسعار الاشتراك الفعلية.</p> -->
         </div>
 
         <div class="grid lg:grid-cols-3 gap-6 items-stretch">
+          
           <div class="glass rounded-3xl p-8 card-hover">
             <div class="text-sm text-gray-400 font-bold">BASIC</div>
             <h3 class="text-3xl font-black mt-3">الباقة الأساسية</h3>
-            <div class="mt-7"><span class="text-5xl font-black">99</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <div class="mt-7"><span class="text-5xl font-black">500</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
             <ul class="mt-8 space-y-4 text-gray-300 text-sm">
               <li>✓ أساسيات الملاكمة</li>
               <li>✓ تدريبات المبتدئين</li>
@@ -238,7 +241,7 @@
             <div class="absolute -top-4 right-7 px-4 py-1.5 rounded-full bg-[#E10600] text-xs font-black">الأكثر اختيارًا</div>
             <div class="text-sm text-[#ff4b45] font-bold">PRO</div>
             <h3 class="text-3xl font-black mt-3">الباقة المتقدمة</h3>
-            <div class="mt-7"><span class="text-5xl font-black">199</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <div class="mt-7"><span class="text-5xl font-black">900</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
             <ul class="mt-8 space-y-4 text-gray-200 text-sm">
               <li>✓ جميع محتوى Basic</li>
               <li>✓ تدريبات متقدمة</li>
@@ -251,7 +254,7 @@
           <div class="glass rounded-3xl p-8 card-hover">
             <div class="text-sm text-gray-400 font-bold">ELITE</div>
             <h3 class="text-3xl font-black mt-3">الباقة الاحترافية</h3>
-            <div class="mt-7"><span class="text-5xl font-black">299</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
+            <div class="mt-7"><span class="text-5xl font-black">1200</span> <span class="text-gray-400">جنية مصري / شهر</span></div>
             <ul class="mt-8 space-y-4 text-gray-300 text-sm">
               <li>✓ جميع الكورسات</li>
               <li>✓ محتوى متقدم</li>
@@ -277,7 +280,11 @@
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           <article class="glass rounded-2xl overflow-hidden card-hover">
-            <div class="h-40 bg-gradient-to-br from-[#E10600]/30 via-[#181818] to-black flex items-center justify-center text-6xl">🥊</div>
+            <div class="h-40 overflow-hidden">
+    <img src="assets/Boxing Fundamentals.jpg"
+         alt="Boxing Fundamentals"
+         class="w-full h-full object-cover">
+</div>
             <div class="p-6">
               <span class="text-xs text-[#ff4b45] font-bold">BEGINNER</span>
               <h3 class="font-black text-xl mt-2">Boxing Fundamentals</h3>
@@ -286,7 +293,11 @@
           </article>
 
           <article class="glass rounded-2xl overflow-hidden card-hover">
-            <div class="h-40 bg-gradient-to-br from-[#8B0000]/30 via-[#181818] to-black flex items-center justify-center text-6xl">👊</div>
+            <div class="h-40 overflow-hidden">
+    <img src="assets/Punching Techniques.jpg"
+         alt="Boxing Fundamentals"
+         class="w-full h-full object-cover">
+</div>
             <div class="p-6">
               <span class="text-xs text-[#ff4b45] font-bold">TECHNIQUE</span>
               <h3 class="font-black text-xl mt-2">Punching Techniques</h3>
@@ -295,7 +306,11 @@
           </article>
 
           <article class="glass rounded-2xl overflow-hidden card-hover">
-            <div class="h-40 bg-gradient-to-br from-[#E10600]/20 via-[#181818] to-black flex items-center justify-center text-6xl">🛡️</div>
+            <div class="h-40 overflow-hidden">
+    <img src="assets/Defense & Movement.jpg"
+         alt="Boxing Fundamentals"
+         class="w-full h-full object-cover">
+</div>
             <div class="p-6">
               <span class="text-xs text-[#ff4b45] font-bold">DEFENSE</span>
               <h3 class="font-black text-xl mt-2">Defense & Movement</h3>
@@ -304,7 +319,11 @@
           </article>
 
           <article class="glass rounded-2xl overflow-hidden card-hover">
-            <div class="h-40 bg-gradient-to-br from-[#8B0000]/30 via-[#181818] to-black flex items-center justify-center text-6xl">🔥</div>
+            <div class="h-40 overflow-hidden">
+    <img src="assets/Advanced Boxing.jpg"
+         alt="Boxing Fundamentals"
+         class="w-full h-full object-cover">
+</div>
             <div class="p-6">
               <span class="text-xs text-[#ff4b45] font-bold">ADVANCED</span>
               <h3 class="font-black text-xl mt-2">Advanced Boxing</h3>

@@ -1,33 +1,134 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>اختر الباقة | SAQR Academy</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
-<style>body{background:#050505;color:#fff;font-family:Arial,Tahoma,sans-serif}.card{background:#101010;border:1px solid rgba(255,255,255,.1);transition:.25s}.card:hover{transform:translateY(-5px);border-color:#e10600}</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>اختر الباقة | SAQR Academy</title>
+  
+  <!-- Scripts & Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  
+  <style>
+    body {
+      background: #050505;
+      color: #fff;
+      font-family: Arial, Tahoma, sans-serif;
+    }
+    .card {
+      background: #101010;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #e10600;
+    }
+  </style>
 </head>
-<body class="min-h-screen">
-<header class="border-b border-white/10 bg-black/90 sticky top-0 z-30"><div class="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center"><a href="index.html" class="font-black text-red-500">SAQR ACADEMY</a><div class="flex items-center gap-4"><span id="hello" class="text-sm text-gray-500"></span><a href="dashboard.html" class="text-sm text-gray-400">حسابي</a></div></div></header>
-<main class="max-w-6xl mx-auto px-5 py-10">
-<div class="text-center mb-10"><p class="text-red-500 text-xs font-black tracking-widest">CHOOSE YOUR PLAN</p><h1 class="text-4xl sm:text-5xl font-black mt-2">اختر الباقة المناسبة لك</h1><p class="text-gray-500 mt-3">بعد اختيار الباقة سيتم نقلك مباشرة إلى صفحة الدفع بالجنيه المصري.</p></div>
-<div id="msg" class="mb-6"></div><div id="plans" class="grid md:grid-cols-3 gap-6"></div>
-</main>
-<script>
-const db=supabaseClient; const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-async function init(){
- const {data:{user}}=await db.auth.getUser(); if(!user){location.href='login.html';return;}
- document.getElementById('hello').textContent='أهلاً، '+(user.user_metadata?.full_name||user.email);
- const {data,error}=await db.from('plans').select('*').eq('is_active',true).order('price');
- if(error){document.getElementById('msg').innerHTML='<div class="p-4 rounded-xl bg-red-950/30 text-red-300">'+esc(error.message)+'</div>';return;}
- document.getElementById('plans').innerHTML=(data||[]).map(p=>`<article class="card rounded-3xl p-7 flex flex-col ${p.slug==='pro'?'ring-1 ring-red-600':''}">
- <div class="flex justify-between items-start"><div><span class="text-red-500 text-xs font-black">SAQR PLAN</span><h2 class="text-3xl font-black mt-2">${esc(p.name)}</h2></div><span class="text-xs bg-white/5 border border-white/10 rounded-full px-3 py-1">${Number(p.duration_days||30)} يوم</span></div>
- <p class="text-gray-500 mt-4 min-h-12">${esc(p.description||'ابدأ تدريبك الآن مع SAQR Academy')}</p>
- <div class="mt-6"><span class="text-4xl font-black">${Number(p.price).toLocaleString('ar-EG')}</span> <span class="text-red-400 font-bold">جنيه مصري</span></div>
- <button onclick="choose('${p.id}')" class="mt-7 w-full bg-red-600 hover:bg-red-700 py-4 rounded-xl font-black">اختيار هذه الباقة</button></article>`).join('');
-}
-function choose(id){location.href='checkout.html?plan='+encodeURIComponent(id);}
-init();
-</script>
-</body></html>
+
+<body class="min-h-screen flex flex-col">
+  <!-- Header / Navigation Bar -->
+  <header class="border-b border-white/10 bg-black/90 sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
+      <a href="index.html" class="font-black text-red-500">SAQR ACADEMY</a>
+      <div class="flex items-center gap-4">
+        <span id="hello" class="text-sm text-gray-500"></span>
+        <a href="dashboard.html" class="text-sm text-gray-400 hover:text-white transition-colors">حسابي</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-5 py-10 flex-grow w-full">
+    <!-- Header Title -->
+    <div class="text-center mb-10">
+      <p class="text-red-500 text-xs font-black tracking-widest">CHOOSE YOUR PLAN</p>
+      <h1 class="text-4xl sm:text-5xl font-black mt-2">اختر الباقة المناسبة لك</h1>
+      <p class="text-gray-500 mt-3">بعد اختيار الباقة سيتم نقلك مباشرة إلى صفحة الدفع بالجنيه المصري.</p>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="msg" class="mb-6"></div>
+
+    <!-- Plans Grid -->
+    <div id="plans" class="grid md:grid-cols-3 gap-6"></div>
+  </main>
+
+  <!-- JavaScript Scripts -->
+  <script>
+    const db = supabaseClient;
+
+    // Helper function to escape HTML special characters
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[m]));
+
+    // Initialize & Fetch Plans
+    async function init() {
+      const { data: { user } } = await db.auth.getUser();
+      
+      if (!user) {
+        location.href = 'login.html';
+        return;
+      }
+
+      document.getElementById('hello').textContent = 'أهلاً، ' + (user.user_metadata?.full_name || user.email);
+
+      const { data, error } = await db.from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price');
+
+      if (error) {
+        document.getElementById('msg').innerHTML = `
+          <div class="p-4 rounded-xl bg-red-950/30 border border-red-800/50 text-red-300">
+            ${esc(error.message)}
+          </div>`;
+        return;
+      }
+
+      // Render Plans
+      document.getElementById('plans').innerHTML = (data || []).map(p => `
+        <article class="card rounded-3xl p-7 flex flex-col ${p.slug === 'pro' ? 'ring-1 ring-red-600' : ''}">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-red-500 text-xs font-black">SAQR PLAN</span>
+              <h2 class="text-3xl font-black mt-2">${esc(p.name)}</h2>
+            </div>
+            <span class="text-xs bg-white/5 border border-white/10 rounded-full px-3 py-1">
+              ${Number(p.duration_days || 30)} يوم
+            </span>
+          </div>
+
+          <p class="text-gray-500 mt-4 min-h-12 flex-grow">
+            ${esc(p.description || 'ابدأ تدريبك الآن مع SAQR Academy')}
+          </p>
+
+          <div class="mt-6">
+            <span class="text-4xl font-black">${Number(p.price).toLocaleString('ar-EG')}</span>
+            <span class="text-red-400 font-bold">جنيه مصري</span>
+          </div>
+
+          <button onclick="choose('${p.id}')" class="mt-7 w-full bg-red-600 hover:bg-red-700 py-4 rounded-xl font-black transition-colors">
+            اختيار هذه الباقة
+          </button>
+        </article>
+      `).join('');
+    }
+
+    // Redirect to Checkout Page
+    function choose(id) {
+      location.href = 'checkout.html?plan=' + encodeURIComponent(id);
+    }
+
+    // Start execution
+    init();
+  </script>
+</body>
+</html>
