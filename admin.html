@@ -78,6 +78,38 @@
     </section>
   </main>
 
+
+  <!-- نافذة تمديد الاشتراك -->
+  <div id="extendModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="w-full max-w-md bg-[#101010] border border-white/10 rounded-3xl p-6 shadow-2xl">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-red-500 text-xs font-black">SUBSCRIPTION</p>
+          <h3 class="text-2xl font-black">تمديد الاشتراك</h3>
+        </div>
+        <button type="button" onclick="closeExtend()" class="text-gray-400 hover:text-white text-2xl">×</button>
+      </div>
+
+      <p id="extendCustomer" class="text-gray-400 text-sm mt-3"></p>
+
+      <div class="mt-5">
+        <label for="newEndsAt" class="font-bold">تاريخ الانتهاء الجديد</label>
+        <input id="newEndsAt" type="date"
+          class="mt-2 w-full bg-black border border-white/10 rounded-xl p-3 text-white">
+      </div>
+
+      <p class="text-gray-500 text-xs mt-3">
+        اختر التاريخ الذي تريد أن ينتهي فيه الاشتراك. عند الحفظ سيتم تفعيل الاشتراك إذا كان التاريخ في المستقبل.
+      </p>
+
+      <div id="extendMsg" class="text-sm mt-4"></div>
+
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="closeExtend()" class="flex-1 bg-white/10 rounded-xl p-3">إلغاء</button>
+        <button type="button" onclick="saveExtension()" class="flex-1 bg-red-600 rounded-xl p-3 font-bold">حفظ التاريخ</button>
+      </div>
+    </div>
+  </div>
   <script>
     const db = supabaseClient;
     let profiles = [];
@@ -182,7 +214,7 @@
                 <td class="p-3">${esc(pl?.name || 'لم يختر')}</td>
                 <td class="p-3">${esc(st(s?.status))}${s?.ends_at ? `<div class="text-gray-500 text-xs">ينتهي ${new Date(s.ends_at).toLocaleDateString('ar-SA')}</div>` : ''}</td>
                 <td class="p-3">${p.account_status === 'suspended' ? '<span class="text-red-400">متوقف</span>' : '<span class="text-green-400">مفعّل</span>'}</td>
-                <td class="p-3">${p.account_status === 'suspended' ? `<button onclick="setStatus('${p.id}','active')" class="bg-green-600 px-3 py-2 rounded-lg">تفعيل</button>` : `<button onclick="setStatus('${p.id}','suspended')" class="bg-red-700 px-3 py-2 rounded-lg">إيقاف</button>`}</td>
+                <td class="p-3"><div class="flex flex-wrap gap-2">${p.account_status === 'suspended' ? `<button onclick="setStatus('${p.id}','active')" class="bg-green-600 px-3 py-2 rounded-lg">تفعيل</button>` : `<button onclick="setStatus('${p.id}','suspended')" class="bg-red-700 px-3 py-2 rounded-lg">إيقاف</button>`}${s ? `<button onclick="openExtend('${p.id}')" class="bg-blue-600 px-3 py-2 rounded-lg font-bold">تمديد الاشتراك</button>` : '<span class="text-gray-500 text-xs self-center">لا يوجد اشتراك</span>'}</div></td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -207,6 +239,79 @@
         await db.from('subscriptions').update({ status: 'cancelled' }).eq('user_id', id).eq('status', 'active');
       }
 
+      await loadAll();
+    }
+
+    let extendUserId = null;
+    let extendUserName = '';
+
+    function openExtend(userId) {
+      extendUserId = userId;
+      const profile = profiles.find(p => p.id === userId);
+      extendUserName = profile?.full_name || profile?.email || 'العميل';
+
+      document.getElementById('extendCustomer').textContent = 'العميل: ' + extendUserName;
+      document.getElementById('extendMsg').textContent = '';
+      document.getElementById('newEndsAt').value = '';
+
+      const modal = document.getElementById('extendModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      setTimeout(() => document.getElementById('newEndsAt').focus(), 50);
+    }
+
+    function closeExtend() {
+      const modal = document.getElementById('extendModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      extendUserId = null;
+      extendUserName = '';
+    }
+
+    async function saveExtension() {
+      if (!extendUserId) return;
+
+      const input = document.getElementById('newEndsAt');
+      const msg = document.getElementById('extendMsg');
+      const value = input.value;
+
+      if (!value) {
+        msg.innerHTML = '<span class="text-red-400">اختر تاريخ الانتهاء الجديد.</span>';
+        return;
+      }
+
+      // نهاية اليوم حسب التوقيت المحلي للمتصفح
+      const chosen = new Date(value + 'T23:59:59');
+
+      if (Number.isNaN(chosen.getTime())) {
+        msg.innerHTML = '<span class="text-red-400">التاريخ غير صحيح.</span>';
+        return;
+      }
+
+      if (!confirm('تأكيد جعل تاريخ انتهاء اشتراك ' + extendUserName + ' هو ' + chosen.toLocaleDateString('ar-EG') + '؟')) {
+        return;
+      }
+
+      msg.innerHTML = '<span class="text-gray-400">جاري حفظ التاريخ...</span>';
+
+      const { data, error } = await db.rpc('admin_set_subscription_end_date', {
+        p_user_id: extendUserId,
+        p_new_ends_at: chosen.toISOString()
+      });
+
+      if (error) {
+        msg.innerHTML = '<span class="text-red-400">' + esc(error.message) + '</span>';
+        return;
+      }
+
+      if (!data?.success) {
+        msg.innerHTML = '<span class="text-red-400">' + esc(data?.message || 'تعذر تعديل الاشتراك.') + '</span>';
+        return;
+      }
+
+      alert('تم تعديل تاريخ انتهاء الاشتراك بنجاح.');
+      closeExtend();
       await loadAll();
     }
 
